@@ -128,23 +128,7 @@ let spinning = false;
 const logoImg = new Image();
 logoImg.src = "clayton.png";
 
-// Populate table
-names.forEach((name) => {
-  const row = document.createElement("tr");
-  const cell = document.createElement("td");
-  cell.textContent = name;
-  row.appendChild(cell);
-  tableBody.appendChild(row);
-});
-
-function highlightRow(index) {
-  [...tableBody.children].forEach((tr, i) => {
-    tr.classList.toggle("active", i === index);
-  });
-  const row = tableBody.children[index];
-  row.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
+// Draw wheel with logo
 function drawWheel(currentAngle) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -161,17 +145,30 @@ function drawWheel(currentAngle) {
     ctx.stroke();
   }
 
-  // Draw spinning logo in center
+  // Draw spinning logo
   const imgSize = 100;
-  if (logoImg.complete) {
+  if (logoImg.complete && logoImg.naturalWidth !== 0) {
     ctx.drawImage(logoImg, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
   }
 
   ctx.restore();
 }
 
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
+// Populate table
+names.forEach((name) => {
+  const row = document.createElement("tr");
+  const cell = document.createElement("td");
+  cell.textContent = name;
+  row.appendChild(cell);
+  tableBody.appendChild(row);
+});
+
+function highlightRow(index) {
+  [...tableBody.children].forEach((tr, i) => {
+    tr.classList.toggle("active", i === index);
+  });
+  const row = tableBody.children[index];
+  row.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 spinBtn.onclick = () => {
@@ -220,14 +217,20 @@ spinBtn.onclick = () => {
   requestAnimationFrame(animate);
 };
 
-// Ensure wheel is drawn on page load
-if (logoImg.complete) {
-  drawWheel(angle);
-} else {
-  logoImg.onload = () => {
-    drawWheel(angle);
-  };
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
 }
+
+// 🔁 Ensure wheel is drawn once image is ready
+function tryInitWheel() {
+  if (logoImg.complete && logoImg.naturalWidth !== 0) {
+    drawWheel(angle);
+  } else {
+    logoImg.onload = () => drawWheel(angle);
+  }
+}
+
+tryInitWheel();
 </script>
 
 </body>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>SPA Commitment Roulette</title>
   <style>
     body {
@@ -78,21 +78,18 @@
 <h1 style="text-align:center;">🎡 SPA Commitment Roulette</h1>
 
 <div class="container">
-  <!-- Table -->
   <div class="table-container">
     <table id="numberTable">
       <tbody></tbody>
     </table>
   </div>
 
-  <!-- Wheel with Arrow -->
   <div class="wheel-container">
     <div class="arrow"></div>
     <canvas id="wheel" width="500" height="500"></canvas>
   </div>
 </div>
 
-<!-- Button & Result -->
 <button id="spinBtn">🎲 Spin the Wheel</button>
 <div id="result"></div>
 
@@ -128,8 +125,11 @@ const radius = canvas.width / 2;
 let angle = 0;
 let spinning = false;
 
-// Populate table with names
-names.forEach((name, i) => {
+const logoImg = new Image();
+logoImg.src = "clayton.png";
+
+// Populate table
+names.forEach((name) => {
   const row = document.createElement("tr");
   const cell = document.createElement("td");
   cell.textContent = name;
@@ -159,6 +159,16 @@ function drawWheel(currentAngle) {
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.stroke();
+  }
+
+  // Draw logo (rotates with wheel)
+  const imgSize = 100;
+  if (logoImg.complete) {
+    ctx.drawImage(logoImg, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+  } else {
+    logoImg.onload = () => {
+      ctx.drawImage(logoImg, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+    };
   }
 
   ctx.restore();

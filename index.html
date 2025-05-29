@@ -161,20 +161,18 @@ function drawWheel(currentAngle) {
     ctx.stroke();
   }
 
-  // Draw logo (rotates with wheel)
+  // Draw spinning logo in center
   const imgSize = 100;
   if (logoImg.complete) {
     ctx.drawImage(logoImg, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
-  } else {
-    logoImg.onload = () => {
-      ctx.drawImage(logoImg, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
-    };
   }
 
   ctx.restore();
 }
 
-drawWheel(angle);
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
 
 spinBtn.onclick = () => {
   if (spinning) return;
@@ -222,8 +220,13 @@ spinBtn.onclick = () => {
   requestAnimationFrame(animate);
 };
 
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
+// Ensure wheel is drawn on page load
+if (logoImg.complete) {
+  drawWheel(angle);
+} else {
+  logoImg.onload = () => {
+    drawWheel(angle);
+  };
 }
 </script>
 

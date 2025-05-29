@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SPA Commitment Roulette</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
+    .table-container {
+      height: 500px;
+      overflow-y: scroll;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    .table-container table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .table-container td {
+      padding: 4px 8px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    .active {
+      background-color: #ffd700;
+      font-weight: bold;
+    }
+    .wheel-container {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+    canvas {
+      border: 3px solid #333;
+      border-radius: 50%;
+      display: block;
+    }
+    .arrow {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 25px solid gold;
+      z-index: 10;
+    }
+    #spinBtn {
+      margin: 20px auto;
+      display: block;
+      padding: 10px 20px;
+      font-size: 18px;
+    }
+    #result {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">🎡 SPA Commitment Roulette</h1>
+
+<div class="container">
+  <!-- Table -->
+  <div class="table-container">
+    <table id="numberTable">
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Wheel with Arrow -->
+  <div class="wheel-container">
+    <div class="arrow"></div>
+    <canvas id="wheel" width="500" height="500"></canvas>
+  </div>
+</div>
+
+<!-- Button & Result -->
+<button id="spinBtn">🎲 Spin the Wheel</button>
+<div id="result"></div>
+
+<audio id="clickSound" src="click.mp3"></audio>
+<audio id="dingSound" src="ding.mp3"></audio>
+
+<script>
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const spinBtn = document.getElementById("spinBtn");
+const resultDiv = document.getElementById("result");
+const clickSound = document.getElementById("clickSound");
+const dingSound = document.getElementById("dingSound");
+const tableBody = document.getElementById("numberTable").querySelector("tbody");
+
+const names = [
+  "Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Jasmine",
+  "Karl", "Laura", "Mike", "Nina", "Oscar", "Paula", "Quentin", "Rita", "Sam", "Tina",
+  "Umar", "Vera", "Will", "Xena", "Yusuf", "Zara", "Adam", "Beth", "Chris", "Debbie",
+  "Elliot", "Faith", "Gabe", "Hailey", "Isaac", "Jill", "Ken", "Lena", "Max", "Nora",
+  "Owen", "Penny", "Quincy", "Rose", "Steve", "Tori", "Ulrich", "Violet", "Wade", "Ximena",
+  "Yara", "Zane", "Anya", "Ben", "Cleo", "Dev", "Elle", "Finn", "Gia", "Harry",
+  "Ivy", "Jack", "Kira", "Lloyd", "Maya", "Noah", "Olga", "Pete", "Queen", "Ralph",
+  "Sara", "Tom", "Umair", "Val", "Wes", "Xander", "Yuki", "Zelda", "Amber", "Brent",
+  "Callie", "Derek", "Eva", "Fred", "Gina", "Hugo", "Isla", "Joel", "Kim", "Lara",
+  "Mick", "Nelly", "Omar", "Pearl", "Ray", "Sky", "Ty", "Una", "Vik", "Wynn",
+  "Yasmin", "Zed", "Zoey", "Zuri", "Zeek"
+];
+
+const numWedges = names.length;
+const wedgeAngle = 2 * Math.PI / numWedges;
+const radius = canvas.width / 2;
+let angle = 0;
+let spinning = false;
+
+// Populate table with names
+names.forEach((name, i) => {
+  const row = document.createElement("tr");
+  const cell = document.createElement("td");
+  cell.textContent = name;
+  row.appendChild(cell);
+  tableBody.appendChild(row);
+});
+
+function highlightRow(index) {
+  [...tableBody.children].forEach((tr, i) => {
+    tr.classList.toggle("active", i === index);
+  });
+  const row = tableBody.children[index];
+  row.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function drawWheel(currentAngle) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(radius, radius);
+  ctx.rotate(currentAngle);
+
+  for (let i = 0; i < numWedges; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, i * wedgeAngle, (i + 1) * wedgeAngle);
+    ctx.fillStyle = i % 2 === 0 ? "#e00" : "#000";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+drawWheel(angle);
+
+spinBtn.onclick = () => {
+  if (spinning) return;
+
+  resultDiv.textContent = "";
+  spinning = true;
+
+  const totalRotation = Math.random() * 4 * Math.PI + 6 * Math.PI;
+  const startTime = performance.now();
+  const duration = 6000;
+  let lastHighlightTime = 0;
+
+  clickSound.loop = true;
+  clickSound.play();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    angle = totalRotation * easeOutCubic(progress);
+    drawWheel(angle);
+
+    const minInterval = 50;
+    const maxInterval = 150;
+    const highlightInterval = minInterval + (maxInterval - minInterval) * progress;
+
+    if (now - lastHighlightTime > highlightInterval) {
+      const currentIndex = Math.floor((numWedges - (angle % (2 * Math.PI)) * numWedges / (2 * Math.PI)) % numWedges);
+      highlightRow(currentIndex);
+      lastHighlightTime = now;
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+      clickSound.pause();
+      dingSound.play();
+
+      const finalIndex = Math.floor((numWedges - (angle % (2 * Math.PI)) * numWedges / (2 * Math.PI)) % numWedges);
+      highlightRow(finalIndex);
+      resultDiv.textContent = `🎉 Winner: ${names[finalIndex]}`;
+    }
+  }
+
+  requestAnimationFrame(animate);
+};
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+</script>
+
+</body>
+</html>
